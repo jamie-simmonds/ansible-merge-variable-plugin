@@ -2,7 +2,7 @@
 
 ## Use case
 
-This plugin can be used to define a variable multiple times, either via host_vars, group_vars, inventory variables or other, and at runtime combine the variable values to have a single variable that can be used within a role. This is similar to how [Salt](https://docs.saltproject.io) allows its pillar data to be defined.
+This plugin can be used to define a variable multiple times, either via host_vars, group_vars, inventory variables or other, and at runtime combine the variable values to have a single variable that can be used within a role. This is similar to how [Salt](https://docs.saltproject.io/en/latest/ref/pillar/all/salt.pillar.stack.html#merging-strategies) allows its pillar data to be defined.
 
 This works with both arrays, lists, and dictionaries in YAML
 
@@ -54,7 +54,7 @@ variable_name:
   - d
 ```
 
-Merge stratigies are available and work the same way as Salt
+Merge stratigies are available and work the same way as [Salt](https://docs.saltproject.io/en/latest/ref/pillar/all/salt.pillar.stack.html#merging-strategies)
 
 - overwrite
 - first
