@@ -18,6 +18,7 @@ class ActionModule(ActionBase):
         name = self._task.args.get('name', '')
         prefix = self._task.args.get('prefix', '')
         suffix = self._task.args.get('suffix', '')
+        inventory_hostname = task_vars.get('inventory_hostname', '')
 
         names = []
 
@@ -32,21 +33,19 @@ class ActionModule(ActionBase):
             name = prefix + name + suffix
 
             if not name:
-                raise AnsibleError('name must be set')
+                continue
 
             if not isidentifier(name):
-                raise AnsibleError('name "%s" is not a valid identifier' % name)
+                continue
 
             keys = sorted([key for key in task_vars.keys() if (key.startswith(name + '__') or key == name)])
             values = [self._templar.template(task_vars[key]) for key in keys]
             merged = None
 
-            display.v('({}) Merging variables in this order: {}'.format(name, keys))
+            display.v('({}/{}) Merging variables in this order: {}'.format(inventory_hostname, name, keys))
 
             if values == []:
-                return {
-                    'changed': False,
-                }
+                continue
             elif isinstance(values[0], list):
                 for value in values:
                     if merged is None:
