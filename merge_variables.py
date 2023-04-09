@@ -3,47 +3,69 @@
 from ansible.plugins.action import ActionBase
 from ansible.errors import AnsibleError
 from ansible.utils.vars import isidentifier
-from __main__ import display
+
+try:
+    from __main__ import display
+except:
+    from ansible.utils.display import Display
+
+    display = Display()
 
 strategies = ('overwrite', 'first', 'last', 'remove')
 
 class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         name = self._task.args.get('name', '')
+        prefix = self._task.args.get('prefix', '')
+        suffix = self._task.args.get('suffix', '')
 
-        if not name:
-            raise AnsibleError('name must be set')
+        names = []
 
-        if not isidentifier(name):
-            raise AnsibleError('name "%s" is not a valid identifier' % name)
-
-        keys = sorted([key for key in task_vars.keys() if (key.startswith(name + '__') or key == name)])
-        values = [self._templar.template(task_vars[key]) for key in keys]
-        merged = None
-
-        display.v('({}) Merging variables in this order: {}'.format(name, keys))
-
-        if values == []:
-            return {
-                'changed': False,
-            }
-        elif isinstance(values[0], list):
-            for value in values:
-                if merged is None:
-                    merged = value
-                else:
-                    merged = _merge_list(merged, value)
-        elif isinstance(values[0], dict):
-            for value in values:
-                if merged is None:
-                    merged = value
-                else:
-                    merged = _merge_dict(merged, value)
+        if isinstance(name, list):
+            names = name
         else:
-            raise AnsibleError("Don't know how to merge variables of type: {}".format(type(values[0])))
+            names = [name]
+
+        facts = {}
+
+        for name in names:
+            name = prefix + name + suffix
+
+            if not name:
+                raise AnsibleError('name must be set')
+
+            if not isidentifier(name):
+                raise AnsibleError('name "%s" is not a valid identifier' % name)
+
+            keys = sorted([key for key in task_vars.keys() if (key.startswith(name + '__') or key == name)])
+            values = [self._templar.template(task_vars[key]) for key in keys]
+            merged = None
+
+            display.v('({}) Merging variables in this order: {}'.format(name, keys))
+
+            if values == []:
+                return {
+                    'changed': False,
+                }
+            elif isinstance(values[0], list):
+                for value in values:
+                    if merged is None:
+                        merged = value
+                    else:
+                        merged = _merge_list(merged, value)
+            elif isinstance(values[0], dict):
+                for value in values:
+                    if merged is None:
+                        merged = value
+                    else:
+                        merged = _merge_dict(merged, value)
+            else:
+                raise AnsibleError("Don't know how to merge variables of type: {}".format(type(values[0])))
+
+            facts[name] = merged
 
         return {
-            'ansible_facts': {name: merged},
+            'ansible_facts': facts,
             'changed': False,
         }
 
